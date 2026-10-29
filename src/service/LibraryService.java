@@ -4,6 +4,7 @@ import entity.User;
 import entity.Book;
 import entity.Loan;
 import exception.BookNotAvailableException;
+import exception.LimitExceededException;
 import exception.UserNotFoundException;
 import repository.BookRepository;
 import repository.UserRepository;
@@ -26,13 +27,22 @@ public class LibraryService {
                 .orElseThrow(() -> new UserNotFoundException("Böyle bir kullanıcı yok"));
 
         Book book = bookRepository.findById(bookId)
-                // Daha önce BookNotAvailableException yaratmıştık, onu kullanıyoruz:
                 .orElseThrow(() -> new BookNotAvailableException("Böyle bir kitap yok"));
 
         if(!book.isBookAvailable()){
             throw new BookNotAvailableException("Kitap şu an başkasında");
         }
 
-        // LİMİT KONTROLÜ VE KAYDETME İŞLEMLERİ BURAYA GELECEK
+        long userBookCount = activeLoans.stream()
+                .filter(loan -> loan.getUser().getUserId().equals(userId))
+                .filter(loan -> loan.getReturnDate() == null)
+                .count();
+
+        if (userBookCount >= user.getMaxBorrowLimit()) {
+            throw new LimitExceededException("Kullanıcı maksimum kitap limitine ulaştı!");
+        }
+
+        book.setBookAvailable(false);
+        activeLoans.add(new Loan(user, book));
     }
 }

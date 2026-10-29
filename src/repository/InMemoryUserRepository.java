@@ -14,6 +14,7 @@ public class InMemoryUserRepository implements UserRepository{
     @Override
     public void save(User u){
         users.add(u);
+        usersMap.put(u.getUserId(), u);
     }
 
     @Override
@@ -26,6 +27,6 @@ public class InMemoryUserRepository implements UserRepository{
 
     @Override
     public Optional<User> findById(String id){
-        return  Optional.ofNullable(usersMap.get(id));
+        return Optional.ofNullable(usersMap.get(id));
     }
 }
